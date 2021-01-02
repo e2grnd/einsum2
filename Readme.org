@@ -1,4 +1,4 @@
-* einsum2
+* einsum2 (E2G Fork of original repo, with edits to make it opt_einsum compatible and fix small bugs)
 
 This is a python package that contains a parallel implementation for 
 a subset of ~numpy.einsum~ functionality.
