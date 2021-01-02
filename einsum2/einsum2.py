@@ -1,3 +1,4 @@
+import sys
 import autograd.numpy as np
 from autograd.extend import primitive, defvjp
 from .parallel_matmul import _par_matmul
@@ -39,6 +40,18 @@ defvjp(
     lambda ans, a, b: lambda g: batched_dot(g, np.transpose(b, (0,2,1))),
     lambda ans, a, b: lambda g: batched_dot(np.transpose(a, (0,2,1)), g))
 
+#Changed by DLB
+def transpose(a, axes=None):
+    at = np.transpose(a,axes=axes)
+    return at
+#Changed by DLB
+def tensordot(x, y, axes=2):
+    result = np.tensordot(x, y,axes=axes)
+    return result
+#Changed by DLB
+def einsum(*args, **kwargs):
+    return einsum2(*args, **kwargs)
+
 def einsum2(*args, **kwargs):
     """
     einsum2(subscripts_str, arr0, arr1)
@@ -67,11 +80,19 @@ def einsum2(*args, **kwargs):
     about this for most packaged, precompiled versions of numpy
     (e.g. Anaconda Python).
     """
+    #Changed by DLB
     if isinstance(args[0], str):
-        subscripts, a, b = args[:3]
-        ab_subs, out_subs = subscripts.split("->")
-        a_subs, b_subs = ab_subs.split(",")
-        return _einsum2(a, list(a_subs), b, list(b_subs), list(out_subs), *args[3:], **kwargs)
+        if len(args)==3:
+            subscripts, a, b = args[:3]
+            ab_subs, out_subs = subscripts.split("->")
+            a_subs, b_subs = ab_subs.split(",")
+            return _einsum2(a, list(a_subs), b, list(b_subs), list(out_subs), *args[3:], **kwargs)
+        else:
+            subscripts, a = args[:2]
+            return np.einsum(subscripts,a)
+ 
+  
+        
     else:
         return _einsum2(*args, **kwargs)
 
