@@ -1,17 +1,19 @@
-"""
-A Python interface to mimic numpy.einsum
-"""
+''' 
+To compile and link, move to /usr/local/lib 
+- must have tblis installed 
+- export LD_LIBRARY_PATH=/usr/local/lib
 
-# g++ -c -O3 -I/usr/local/include/tblis/util  -I/usr/local/include/tblis as_einsum.cxx -o as_einsum.o -L/usr/local/lib/ -ltblis -march=native  -fopenmp
-# g++ as_einsum.o -shared -I/usr/local/include/tblis/util  -I/usr/local/include/tblis -o libeinsum_tblis.so -L/usr/local/lib/ -ltblis   -march=native -fopenmp
+g++ -c -O3 -I/usr/local/include/tblis/util  -I/usr/local/include/tblis as_einsum.cxx -o as_einsum.o -L/usr/local/lib/ -ltblis -march=native  -fopenmp
+g++ as_einsum.o -shared -I/usr/local/include/tblis/util  -I/usr/local/include/tblis -o libeinsum_tblis.so -L/usr/local/lib/ -ltblis   -march=native -fopenmp
 
+'''
 import sys
 import re
 import ctypes
 import numpy as np
 import time
 
-libtblis = ctypes.CDLL("./libeinsum_tblis.so")
+libtblis = ctypes.CDLL("/usr/local/lib/libeinsum_tblis.so")
 
 libtblis.as_einsum.restype = None
 libtblis.as_einsum.argtypes = (
