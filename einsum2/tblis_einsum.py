@@ -158,7 +158,7 @@ def einsum(subscripts, *tensors, **kwargs):
 
 if __name__ == "__main__":
 
-    i, j, k, l = 500, 100, 200, 200
+    i, j, k, l = 100,300, 10000, 100
     a = np.random.rand(i, j, k)
     b = np.random.rand(i, k, l)
     subscripts = "ijk,ikl->ijl"
