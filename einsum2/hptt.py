@@ -10,21 +10,6 @@ if 'OMP_NUM_THREADS' in os.environ:
 else:
     DEFAULT_THREADS = psutil.cpu_count(logical=False)
 
-# try:
-#     HPTT_ROOT = os.environ['HPTT_ROOT']
-# except KeyError:
-#     try:
-#         import configparser
-#         config = configparser.ConfigParser()
-#         config.read(os.path.join(os.path.dirname(__file__), 'hptt.cfg'))
-#         HPTT_ROOT = config['lib']['HPTT_ROOT']
-#     except KeyError:
-#         raise OSError("[HPTT] ERROR: 'libhptt.so' can't be found. 'HPTT_ROOT' "
-#                       "is neither set as an environment variable or specified "
-#                       "in the config file. It should point to the folder which"
-#                       " includes '$HPTT_ROOT/lib/libhptt.so'.")
-# HPTTlib = cdll.LoadLibrary(os.path.join(HPTT_ROOT, "lib", "libhptt.so"))
-
 HPTTlib = cdll.LoadLibrary("/usr/local/lib/libhptt.so")
 
 def randomNumaAwareInit( A ):
@@ -88,7 +73,7 @@ def tensorTransposeAndUpdate(perm, alpha, A, beta, B, numThreads=-1):
      
     if numThreads < 0:
         numThreads = max(1, DEFAULT_THREADS)
-    numThreads=24
+
     # setup A ctypes
     Ashape = A.shape
     dataA = ctypes.c_void_p(A.ctypes.data)

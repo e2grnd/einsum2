@@ -11,16 +11,6 @@ import ctypes
 import numpy as np
 import time
 
-# if (sys.platform.startswith('linux') or
-#     sys.platform.startswith('gnukfreebsd')):
-#     so_ext = '.so'
-# elif sys.platform.startswith('darwin'):
-#     so_ext = '.dylib'
-# elif sys.platform.startswith('win'):
-#     so_ext = '.dll'
-# else:
-#     raise ImportError('Unsupported platform')
-
 libtblis = ctypes.CDLL("./libeinsum_tblis.so")
 
 libtblis.as_einsum.restype = None
@@ -168,7 +158,7 @@ def einsum(subscripts, *tensors, **kwargs):
 
 if __name__ == "__main__":
 
-    i, j, k, l = 500, 100, 200, 100
+    i, j, k, l = 500, 100, 200, 200
     a = np.random.rand(i, j, k)
     b = np.random.rand(i, k, l)
     subscripts = "ijk,ikl->ijl"
@@ -177,36 +167,39 @@ if __name__ == "__main__":
 
     start = time.time()
     d = einsum(subscripts, a, b)
+    print("Tblis entry: ", d.flatten()[0])
     finish = time.time()
     tblis = finish - start
     print("tblis", tblis)
 
     start = time.time()
     d = np.einsum(subscripts, a, b)
+    print("NPY entry: ", d.flatten()[0])
     finish = time.time()
     npy = finish - start
     print("npy", npy)
 
     print("Speedup: ", npy / tblis)
 
-    size =  6
-    a = np.random.rand(size,size, size, size, size,size, size,size, 2*size)
-    b = np.random.rand(2*size, size,size, size,size)
-    subscripts = "ghicdaefb,bcade->dca"
+    size = 2
+    a = np.random.rand(size, size, size, size, size, size, size)
+    b = np.random.rand(size, size, size, size, size, size, size)
+    subscripts = "abcdefg,hijklmn->abcdefghijklmn"
 
-    print("Arrays generated for big product..")
+    print("\n\nArrays generated for big product..")
 
     start = time.time()
     d = einsum(subscripts, a, b)
+    print("Tblis entry: ", d.flatten()[0])
     finish = time.time()
     tblis = finish - start
     print("tblis", tblis)
 
     start = time.time()
     d = np.einsum(subscripts, a, b)
+    print("NPY entry: ", d.flatten()[0])
     finish = time.time()
     npy = finish - start
     print("npy", npy)
 
     print("Speedup: ", npy / tblis)
-
