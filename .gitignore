@@ -6,10 +6,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.pyx
 # C extensions
 *.so
-
+*.o
 # Distribution / packaging
 .Python
 env/
