@@ -1,0 +1,1 @@
+from .eincore import einsum, tensordot, transpose

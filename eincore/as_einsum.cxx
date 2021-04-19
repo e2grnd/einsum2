@@ -42,9 +42,9 @@ static void _as_tensor(tblis_tensor *t, void *data, int dtype, int ndim,
 }
 
 extern "C" {
-void as_einsum(void *data_A, int ndim_A, ptrdiff_t *shape_A, ptrdiff_t *strides_A, char *descr_A,
-               void *data_B, int ndim_B, ptrdiff_t *shape_B, ptrdiff_t *strides_B, char *descr_B,
-               void *data_C, int ndim_C, ptrdiff_t *shape_C, ptrdiff_t *strides_C, char *descr_C,
+void as_einsum(void *data_A, int ndim_A, ptrdiff_t *shape_A, ptrdiff_t *strides_A, int *descr_A,
+               void *data_B, int ndim_B, ptrdiff_t *shape_B, ptrdiff_t *strides_B, int *descr_B,
+               void *data_C, int ndim_C, ptrdiff_t *shape_C, ptrdiff_t *strides_C, int *descr_C,
                int dtype, void *alpha, void *beta)
 {
     tblis_tensor A, B, C;

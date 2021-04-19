@@ -1,4 +1,4 @@
-''' 
+""" 
 To compile and link, move to /usr/local/lib 
 - must have tblis installed 
 - export LD_LIBRARY_PATH=/usr/local/lib
@@ -6,7 +6,7 @@ To compile and link, move to /usr/local/lib
 g++ -c -O3 -I/usr/local/include/tblis/util  -I/usr/local/include/tblis as_einsum.cxx -o as_einsum.o -L/usr/local/lib/ -ltblis -march=native  -fopenmp
 g++ as_einsum.o -shared -I/usr/local/include/tblis/util  -I/usr/local/include/tblis -o libeinsum_tblis.so -L/usr/local/lib/ -ltblis   -march=native -fopenmp
 
-'''
+"""
 import sys
 import re
 import ctypes
@@ -21,17 +21,17 @@ libtblis.as_einsum.argtypes = (
     ctypes.c_int,
     ctypes.POINTER(ctypes.c_size_t),
     ctypes.POINTER(ctypes.c_size_t),
-    ctypes.POINTER(ctypes.c_char),
+    ctypes.POINTER(ctypes.c_int),
     np.ctypeslib.ndpointer(),
     ctypes.c_int,
     ctypes.POINTER(ctypes.c_size_t),
     ctypes.POINTER(ctypes.c_size_t),
-    ctypes.POINTER(ctypes.c_char),
+    ctypes.POINTER(ctypes.c_int),
     np.ctypeslib.ndpointer(),
     ctypes.c_int,
     ctypes.POINTER(ctypes.c_size_t),
     ctypes.POINTER(ctypes.c_size_t),
-    ctypes.POINTER(ctypes.c_char),
+    ctypes.POINTER(ctypes.c_int),
     ctypes.c_int,
     np.ctypeslib.ndpointer(),
     np.ctypeslib.ndpointer(),
@@ -47,7 +47,7 @@ tblis_dtype = {
 np_einsum = np.einsum
 
 
-def _contract(subscripts, *tensors, **kwargs):
+def contract(subscripts, *tensors, **kwargs):
     """
     c = alpha * contract(a, b) + beta * c
 
@@ -68,13 +68,6 @@ def _contract(subscripts, *tensors, **kwargs):
         np.issubdtype(c_dtype, np.float64) or np.issubdtype(c_dtype, np.complex)
     ):
         return np_einsum(subscripts, *tensors)
-
-    if "->" not in subscripts:
-        # Find chararacters which appear only once in the subscripts for c_descr
-        for x in set(indices):
-            if indices.count(x) > 1:
-                indices = indices.replace(x, "")
-        sub_idx += [indices]
 
     alpha = kwargs.get("alpha", 1)
     beta = kwargs.get("beta", 0)
@@ -118,90 +111,28 @@ def _contract(subscripts, *tensors, **kwargs):
     b_strides = (ctypes.c_size_t * b.ndim)(*[x // nbytes for x in b.strides])
     c_strides = (ctypes.c_size_t * c.ndim)(*[x // nbytes for x in c.strides])
 
+    a_descr_int = [ord(s) for s in a_descr]
+    b_descr_int = [ord(s) for s in b_descr]
+    c_descr_int = [ord(s) for s in c_descr]
+
     libtblis.as_einsum(
         a,
         a.ndim,
         a_shape,
         a_strides,
-        a_descr.encode("ascii"),
+        (ctypes.c_int * len(a_descr_int))(*a_descr_int),
         b,
         b.ndim,
         b_shape,
         b_strides,
-        b_descr.encode("ascii"),
+        (ctypes.c_int * len(b_descr_int))(*b_descr_int),
         c,
         c.ndim,
         c_shape,
         c_strides,
-        c_descr.encode("ascii"),
+        (ctypes.c_int * len(c_descr_int))(*c_descr_int),
         tblis_dtype[c_dtype],
         alpha,
         beta,
     )
     return c
-
-
-def einsum(subscripts, *tensors, **kwargs):
-    subscripts = subscripts.replace(" ", "")
-    if len(tensors) <= 1:
-        out = np_einsum(subscripts, *tensors, **kwargs)
-    elif len(tensors) <= 2:
-        out = _contract(subscripts, *tensors, **kwargs)
-    else:
-        sub_idx = subscripts.split(",", 2)
-        res_idx = "".join(set(sub_idx[0] + sub_idx[1]).intersection(sub_idx[2]))
-        res_idx = res_idx.replace(",", "")
-        script0 = sub_idx[0] + "," + sub_idx[1] + "->" + res_idx
-        subscripts = res_idx + "," + sub_idx[2]
-        tensors = [_contract(script0, *tensors[:2])] + list(tensors[2:])
-        out = einsum(subscripts, *tensors, **kwargs)
-    return out
-
-
-if __name__ == "__main__":
-
-    i, j, k, l = 100,300, 10000, 100
-    a = np.random.rand(i, j, k)
-    b = np.random.rand(i, k, l)
-    subscripts = "ijk,ikl->ijl"
-
-    print("Arrays generated for eincore..")
-
-    start = time.time()
-    d = einsum(subscripts, a, b)
-    print("Tblis entry: ", d.flatten()[0])
-    finish = time.time()
-    tblis = finish - start
-    print("tblis", tblis)
-
-    start = time.time()
-    d = np.einsum(subscripts, a, b)
-    print("NPY entry: ", d.flatten()[0])
-    finish = time.time()
-    npy = finish - start
-    print("npy", npy)
-
-    print("Speedup: ", npy / tblis)
-
-    size = 2
-    a = np.random.rand(size, size, size, size, size, size, size)
-    b = np.random.rand(size, size, size, size, size, size, size)
-    subscripts = "abcdefg,hijklmn->abcdefghijklmn"
-
-    print("\n\nArrays generated for big product..")
-
-    start = time.time()
-    d = einsum(subscripts, a, b)
-    print("Tblis entry: ", d.flatten()[0])
-    finish = time.time()
-    tblis = finish - start
-    print("tblis", tblis)
-
-    start = time.time()
-    d = np.einsum(subscripts, a, b)
-    print("NPY entry: ", d.flatten()[0])
-    finish = time.time()
-    npy = finish - start
-    print("npy", npy)
-
-    print("Speedup: ", npy / tblis)
